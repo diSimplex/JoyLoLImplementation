@@ -1,0 +1,8 @@
+cfdoitConfig: cfdoit.toml
+loadActions:
+  - ~/GitTools/lpic/lpic-tool/src/actions
+loadGrammar:
+  - ~/GitTools/lpic/lpic-syntaxes/lpicSyntaxes/context.tmLanguage.json
+  - ~/GitTools/lpic/lpic-syntaxes/lpicSyntaxes/lpic.tmLanguage.json
+loadBuilders:
+  - ~/GitTools/lpic/lpic-tool/src/builders
