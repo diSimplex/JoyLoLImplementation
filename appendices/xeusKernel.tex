@@ -1,0 +1,41 @@
+%% lpic
+
+\usemodule[t-litprog]
+\starttext
+
+\chapter[JoyLoL Xeus Kernel]
+
+In this appendix we document the Xeus based Jupyter kernel for the JoyLoL
+programming language.
+
+\component appendices/kernelClass
+
+\component appendices/kernelMain
+
+To link the kernel we need:
+
+\startDescription{jsonEchoKernel}{gppInstallCommand}
+  \creates{application}{jsonEchoKernel}
+
+  \requires{cObj}{jeClass.o}
+  \requires{cObj}{jeMain.o}
+
+It is important to note that the 'xeus-zmq' library MUST come before the 'xeus'
+library!
+
+  \requires{package}{xeus-zmq}
+  \requires{pkgLib}{xeus-zmq.a}
+
+  \requires{package}{xeus}
+  \requires{pkgLib}{xeus.a}
+
+  \requires{package}{libzmq}
+  \requires{pkgLib}{zmq.a}
+
+  \requires{systemLib}{crypto}
+  \requires{systemLib}{sodium}
+  \requires{systemLib}{uuid}
+  \requires{systemLib}{pthread}
+\stopDescription
+
+\stoptext

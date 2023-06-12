@@ -1,0 +1,209 @@
+%% lpic
+
+\starttext
+
+\startCppHeader{kernelClass.hpp}
+
+#ifndef JOYLOL_KERNEL_HPP
+#define JOYLOL_KERNEL_HPP
+
+#include "xeus/xinterpreter.hpp"
+
+#include "nlohmann/json.hpp"
+
+namespace nl = nlohmann;
+
+namespace joylolKernel {
+
+  class JoylolKernel : public xeus::xinterpreter {
+
+  public:
+
+    JoylolKernel() = default;
+    virtual ~JoylolKernel() = default;
+
+  private:
+
+    void configure_impl() override;
+
+    nl::json execute_request_impl(
+      int executionCounter,
+      const std::string& code,
+      bool silent,
+      bool storeHistory,
+      nl::json userExpressions,
+      bool allowStdIn
+    ) override;
+
+  nl::json complete_request_impl(
+    const std::string& code,
+    int cursorPos
+  ) override;
+
+  nl::json inspect_request_impl(
+    const std::string& code,
+    int cursorPos,
+    int detailLevel
+  ) override;
+
+  nl::json is_complete_request_impl(
+    const std::string& code
+  ) override;
+
+  nl::json kernel_info_request_impl() override;
+
+  void shutdown_request_impl() override;
+
+  };
+
+}
+
+#endif
+\stopCppHeader
+
+
+\startCppCode{kernelClass.cpp}
+#include "kernelClass.hpp"
+
+#include "xeus/xhelper.hpp"
+
+////////////////////////////////////////////////////////////////////////////
+// Configure the interpreter...
+//
+void joylolKernel::JoylolKernel::configure_impl(){
+  // nothing to do....
+}
+
+
+////////////////////////////////////////////////////////////////////////////
+// DO the request....
+//
+nl::json joylolKernel::JoylolKernel::execute_request_impl(
+    int executionCounter,
+    const std::string& code,
+    bool silent,
+    bool storeHistory,
+    nl::json userExpressions,
+    bool allowStdIn
+) {
+
+  auto errorType = "Unknown";
+  auto errorMsg = std::stringstream();
+  try {
+
+    nl::json jData = nl::json::parse(code);
+
+    nl::json publicData;
+    publicData["text/plain"] = jData.dump(2);
+    publish_execution_result(
+      executionCounter,
+      std::move(publicData),
+      nl::json::object()
+    );
+    return xeus::create_successful_reply();
+
+  } catch ( nl::json::parse_error& err ) {
+    errorType = "Parse Error";
+    errorMsg << "Parsing at: " << err.byte << std::endl;
+    errorMsg << err.what() << std::endl;
+  } catch ( std::exception& err ) {
+    errorType = "General Error";
+    errorMsg << err.what() << std::endl;
+  } catch (...) {
+    errorType = "Unknonwn Error";
+    errorMsg << "Unknown erorr!" << std::endl ;
+  }
+
+  publish_execution_error(
+    errorType,
+    errorMsg.str(),
+    nl::json::array()
+  );
+  return xeus::create_error_reply();
+}
+
+////////////////////////////////////////////////////////////////////////////
+// Provide the user with some code completion information
+// at the cursor position...
+//
+nl::json joylolKernel::JoylolKernel::complete_request_impl(
+  const std::string& code,
+  int cursorPos
+) {
+  return xeus::create_complete_reply({}, cursorPos, cursorPos);
+}
+
+////////////////////////////////////////////////////////////////////////////
+// Inspect the request at the cursor position ...
+//
+nl::json joylolKernel::JoylolKernel::inspect_request_impl(
+  const std::string& code,
+  int cursorPos,
+  int detailLevel
+) {
+  return xeus::create_inspect_reply();
+}
+
+////////////////////////////////////////////////////////////////////////////
+// Tell the user if the code is "complete"...
+//
+nl::json joylolKernel::JoylolKernel::is_complete_request_impl(
+  const std::string& code
+) {
+  try {
+
+    nl::json jData = nl::json::parse(code);
+
+    return xeus::create_is_complete_reply("complete");
+  } catch ( nl::json::parse_error& err ) {
+    return xeus::create_is_complete_reply("incomplete");
+  } catch (...) {
+  }
+  return xeus::create_is_complete_reply("invalid");
+}
+
+////////////////////////////////////////////////////////////////////////////
+// Return the JoylolKernel kernel information
+//
+nl::json joylolKernel::JoylolKernel::kernel_info_request_impl() {
+  return xeus::create_info_reply(
+    "",
+    "JoylolKernel",
+    "0.0.1",
+    "JoyLoL-JSON",
+    "0.0.1",
+    "text/x-json",
+    ".json",
+    "JsonLexer",
+    "json"
+  );
+}
+
+////////////////////////////////////////////////////////////////////////////
+// Shutdown this kernel!
+//
+void joylolKernel::JoylolKernel::shutdown_request_impl() {
+  std::cout << "Bye!" << std::endl;
+}
+
+\stopCppCode
+
+To compile the kernelClass we need:
+
+\startDescription{kernelClass.cpp}{gppCompile}
+  \creates{cObj}{kernelClass.o}
+
+  \requires{srcHeader}{kernelClass.hpp}
+
+  %\requires{package}{xtl}
+  %\requires{pkgHeader}{xtl/xhash.hpp}
+
+  \requires{package}{nl-json}
+  \requires{pkgHeader}{nlohmann/json.hpp}
+
+  \requires{package}{xeus}
+  \requires{pkgHeader}{xeus/xinterpreter.hpp}
+  \requires{pkgHeader}{xeus/xhelper.hpp}
+\stopDescription
+
+\stoptext

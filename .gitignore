@@ -1,3 +1,6 @@
+*.pdf
+*.tuc
+
 .mindMapper.toml
 
 ## Core latex/pdflatex auxiliary files:
